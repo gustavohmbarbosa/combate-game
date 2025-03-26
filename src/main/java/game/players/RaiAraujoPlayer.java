@@ -5,7 +5,6 @@ import game.feedbacks.AttackFeedback;
 import game.feedbacks.DefeatFeedback;
 import game.feedbacks.EqualStrengthFeedback;
 import game.feedbacks.Feedback;
-import game.feedbacks.InvalidMoveFeedback;
 import game.pieces.OpponentPiece;
 import game.pieces.Piece;
 import game.pieces.PieceAction;
@@ -15,21 +14,20 @@ import game.pieces.QuantityPerPiece;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
+import java.util.Stack;
 
 public class RaiAraujoPlayer implements Player {
   private String playerName = "Raí Araujo";
   private int[] prisonerPosition;
   private Piece[][] setup = new Piece[4][10];
 
-  private final Set<Piece> exhaustedPieces = new HashSet<>();
-
   private Map<String, Double>[][] enemyProbabilities;
   private Map<String, Integer> enemyPiecesRemaining;
+
+  private Stack<Piece> recentPiecesPlayed = new Stack<Piece>();
 
   public RaiAraujoPlayer(String name) {
     this.playerName = name;
@@ -192,7 +190,7 @@ public class RaiAraujoPlayer implements Player {
         removeEnemyPieceFromBoard(defender);
       }
 
-      // 2) Se o inimigo é quem venceu (attacker),
+      // 2) Se attacker é o inimigo e quem venceu ,
       // então na célula (toX, toY) tem 100% de chance de ser a peça do
       // attacker.getRepresentation()
       if (isEnemyPiece(attacker)) {
@@ -391,8 +389,7 @@ public class RaiAraujoPlayer implements Player {
         if (piece != null
             && piece.getPlayer() != null
             && piece.getPlayer().equals(this.playerName)
-            && isMovablePiece(piece)
-            && !exhaustedPieces.contains(piece)) {
+            && isMovablePiece(piece) && checkRecentActions(piece)) {
           int[][] dirs = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
           for (int[] d : dirs) {
             int nx = x + d[0];
@@ -410,6 +407,25 @@ public class RaiAraujoPlayer implements Player {
     }
 
     return bestAction;
+  }
+
+  public void updateRecentActions(Piece piece) {
+    // se o topo da pilha for diferente da peça que vai ser jogada, reseta a pilha
+    if (recentPiecesPlayed.isEmpty()
+        || !(recentPiecesPlayed.peek().getRepresentation().equals(piece.getRepresentation()))) {
+      recentPiecesPlayed.clear();
+    }
+
+    recentPiecesPlayed.push(piece);
+  }
+
+  public boolean checkRecentActions(Piece piece) {
+    // se na pilha já existe 2 jogadas e a última é da mesma peça, evitar jogar pois perde a vez
+    if (recentPiecesPlayed.size() >= 2 &&
+        recentPiecesPlayed.peek().getRepresentation().equals(piece.getRepresentation())) {
+      return false;
+    }
+    return true;
   }
 
   public double scoreMove(Piece myPiece, int tx, int ty, Board board) {
@@ -483,6 +499,10 @@ public class RaiAraujoPlayer implements Player {
 
     // Tenta escolher jogada
     PieceAction action = chooseMove(board);
+
+    if (action != null) {
+      updateRecentActions(action.getPiece());
+    } 
     return action; //
   }
 }
