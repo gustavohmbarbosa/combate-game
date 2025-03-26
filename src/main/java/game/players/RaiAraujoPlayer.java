@@ -343,78 +343,6 @@ public class RaiAraujoPlayer implements Player {
     return !piece.getPlayer().equals(this.playerName);
   }
 
-  private int getStrengthOfCode(String code) {
-    try {
-      return Integer.parseInt(code);
-    } catch (NumberFormatException e) {
-      return switch (code) {
-        case "B" -> 99; // Bomba
-        case "PS" -> 0; // Prisioneiro
-        default -> -1; // ex: "OP"
-      };
-    }
-  }
-
-  public double estimateWinProbability(Piece myPiece, int ex, int ey) {
-    if (!Board.isValidPosition(ex, ey))
-      return 0.0;
-    // probabilidade de cada peça na célula (ex, ey)
-    Map<String, Double> dist = enemyProbabilities[ex][ey];
-    if (dist == null || dist.isEmpty())
-      return 0.0;
-
-    double sumWin = 0.0, sumTie = 0.0, sumLose = 0.0;
-    // Minha força
-    int myStr = myPiece.getStrength();
-
-    for (var e : dist.entrySet()) {
-      String code = e.getKey();
-      double p = e.getValue();
-      if (p < 1e-9)
-        continue; // se for praticamente 0, ignora
-
-      int enStr = getStrengthOfCode(code);
-      // Cabo vs Bomba
-      if ("B".equals(code)) {
-        if (myStr == 3)
-          sumWin += p;
-        else
-          sumLose += p;
-        continue;
-      }
-      // Agente vs General
-      // TODO: apenas se o agente jogar primeiro
-      if (myStr == 1 && enStr == 10) {
-        sumWin += p;
-        continue;
-      }
-      // Geral
-      if (myStr > enStr)
-        sumWin += p;
-      else if (myStr == enStr)
-        sumTie += p;
-      else
-        sumLose += p;
-    }
-
-    // Calcula a probabilidade total de vitória, empate e derrota
-    double total = sumWin + sumTie + sumLose;
-
-    if (total < 1e-9)
-      return 0.0;
-    // retorna a probabilidade de vitória
-    return sumWin / total;
-  }
-
-  public double estimateRiskOfBomb(int x, int y) {
-    if (!Board.isValidPosition(x, y))
-      return 0.0;
-    Map<String, Double> dist = enemyProbabilities[x][y];
-    if (dist == null || dist.isEmpty())
-      return 0.0;
-    return dist.getOrDefault("B", 0.0);
-  }
-
   /**
    * Peça não é Bomba (M/B) nem Prisioneiro (PS).
    */
@@ -480,7 +408,8 @@ public class RaiAraujoPlayer implements Player {
     if (occupant == null) {
       int forwardDir = (this.playerName.equals("Player1")) ? 1 : -1;
       int toX = tx - myPiece.getPosX();
-      double bonus = (toX == forwardDir) ? 3.0 : 0.0;
+      int toY = ty - myPiece.getPosY();
+      double bonus = (toX == forwardDir) || (toY == forwardDir) ? 3.0 : 0.0;
       return 5.0 + bonus;
     }
 
@@ -506,6 +435,11 @@ public class RaiAraujoPlayer implements Player {
     int myPieceStrength = pieceStrength.get(code);
     List<String> strongers = new ArrayList<>();
     for (var piece : pieceStrength.entrySet()) {
+      if (code == QuantityPerPiece.CORPORAL.getCode()
+          && piece.getKey() == QuantityPerPiece.LAND_MINE.getCode()) {
+        strongers.add(piece.getKey());
+      }
+
       if (myPieceStrength >= piece.getValue()) {
         strongers.add(piece.getKey());
       }
@@ -542,7 +476,7 @@ public class RaiAraujoPlayer implements Player {
 
     // Fórmula de pontuação (ajuste conforme sua lógica de jogo)
     double base = 10.0;
-    return base + 80.0 * bestProbability - 30.0 * guessBomb;
+    return base + 80.0 * bestProbability - 40.0 * guessBomb;
   }
 
   @Override
