@@ -5,7 +5,6 @@ import game.feedbacks.AttackFeedback;
 import game.feedbacks.DefeatFeedback;
 import game.feedbacks.EqualStrengthFeedback;
 import game.feedbacks.Feedback;
-import game.feedbacks.MoveFeedback;
 import game.pieces.OpponentPiece;
 import game.pieces.Piece;
 import game.pieces.PieceAction;
@@ -34,18 +33,8 @@ public class RaiAraujoPlayer implements Player {
   public RaiAraujoPlayer(String name) {
     this.playerName = name;
     initEnemyKnowledge();
-    pieceStrength.put("PS", 0);   // Prisioneiro (não combate)
-    pieceStrength.put("M", 99);    // Mina (não se move)
-    pieceStrength.put("AS", 10);  // Agente Secreto (pode derrotar qualquer peça)
-    pieceStrength.put("G", 9);    // General
-    pieceStrength.put("CR", 8);   // Coronel
-    pieceStrength.put("MJ", 7);   // Major
-    pieceStrength.put("CP", 6);   // Capitão
-    pieceStrength.put("T", 5);    // Tenente
-    pieceStrength.put("ST", 4);   // Subtenente
-    pieceStrength.put("SG", 3);   // Sargento
-    pieceStrength.put("C", 2);    // Cabo
-    pieceStrength.put("S", 1);    // Soldado
+    initEnemyPieces();
+    initPieceStrength();
   }
 
   @Override
@@ -146,20 +135,42 @@ public class RaiAraujoPlayer implements Player {
     };
   }
 
-  @SuppressWarnings("unchecked") // Se tira da um erro nd com nd
-  public void initEnemyKnowledge() {
-    // Cada celula tem um Hmap<String, Double> com as probabilidades de cada peça
+  public void initPieceStrength() {
+    pieceStrength.put("M", 99); // Mina (não se move)
+    pieceStrength.put("G", 10); // General
+    pieceStrength.put("CR", 9); // Coronel
+    pieceStrength.put("MJ", 8); // Major
+    pieceStrength.put("CP", 7); // Capitão
+    pieceStrength.put("T", 6); // Tenente
+    pieceStrength.put("ST", 5); // Subtenente
+    pieceStrength.put("SG", 4); // Sargento
+    pieceStrength.put("C", 3); // Cabo
+    pieceStrength.put("S", 2); // Soldado
+    pieceStrength.put("AS", 1); // Agente Secreto (pode derrotar qualquer peça)
+    pieceStrength.put("PS", 0); // Prisioneiro (não combate)
+  }
+
+  private void initEnemyPieces() {
+    enemyPiecesRemaining = new HashMap<>();
+    for (QuantityPerPiece piece : QuantityPerPiece.values()) {
+      enemyPiecesRemaining.put(piece.getCode(), piece.getQuantity());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initProbabilityGrid() {
     enemyProbabilities = new HashMap[Board.ROWS][Board.COLS];
+
     for (int x = 0; x < Board.ROWS; x++) {
       for (int y = 0; y < Board.COLS; y++) {
-        enemyProbabilities[x][y] = new HashMap<>();
+        enemyProbabilities[x][y] = new HashMap<String, Double>();
       }
     }
-    // Preenche enemyPiecesRemaining com a quantidade inicial de cada tipo
-    enemyPiecesRemaining = new HashMap<>();
-    for (QuantityPerPiece qpp : QuantityPerPiece.values()) {
-      enemyPiecesRemaining.put(qpp.getCode(), qpp.getQuantity());
-    }
+  }
+
+  public void initEnemyKnowledge() {
+    // Cada celula tem um Hmap<String, Double> com as probabilidades de cada peça
+    initProbabilityGrid();
 
     // Se sou Player1, o inimigo está em 6..9; se Player2, 0..3
     int enemyStartRow = this.playerName.equals("Player1") ? 6 : 0;
@@ -168,7 +179,7 @@ public class RaiAraujoPlayer implements Player {
 
     for (int x = 0; x < Board.ROWS; x++) {
       for (int y = 0; y < Board.COLS; y++) {
-        // Se for uma posição de lago zera tudo
+        // Se for uma posição de lago ou fora do alcance do inimigo, zera
         if (Board.isLake(x, y) || x < enemyStartRow || x > enemyEndRow) {
           for (QuantityPerPiece qpp : QuantityPerPiece.values()) {
             enemyProbabilities[x][y].put(qpp.getCode(), 0.0);
@@ -312,7 +323,7 @@ public class RaiAraujoPlayer implements Player {
           if (enemyProbabilities[x][y].get(qpp.getCode()) != 0) {
             // reseta a probabilidade
             enemyProbabilities[x][y].put(qpp.getCode(), 0.0);
-            
+
             if (boardPiece == null) // senão houver peça no mapa, não atualiza probabilidades
               continue;
             String code = qpp.getCode();
@@ -455,7 +466,7 @@ public class RaiAraujoPlayer implements Player {
   }
 
   public boolean checkRecentActions(Piece piece) {
-    // se na pilha já existe 2 jogadas e a última é da mesma peça, evitar jogar pois perde a vez
+    // evita jogar a mesma peça 3 vezes seguidas
     if (recentPiecesPlayed.size() >= 2 && recentPiecesPlayed.peek().equals(piece)) {
       return false;
     }
@@ -494,7 +505,7 @@ public class RaiAraujoPlayer implements Player {
   private List<String> getStrongerCodes(String code) {
     int myPieceStrength = pieceStrength.get(code);
     List<String> strongers = new ArrayList<>();
-    for(var piece: pieceStrength.entrySet()) {
+    for (var piece : pieceStrength.entrySet()) {
       if (myPieceStrength >= piece.getValue()) {
         strongers.add(piece.getKey());
       }
@@ -513,26 +524,26 @@ public class RaiAraujoPlayer implements Player {
     List<Double> probabilities = new ArrayList<>();
 
     Map<String, Double> cellDist = enemyProbabilities[tx][ty];
-    for(var enemyPiece : cellDist.entrySet()) {
-        if (strongers.contains(enemyPiece.getKey()) && enemyPiece.getValue() > 0) {
-            probabilities.add(enemyPiece.getValue());
-        }
+    for (var enemyPiece : cellDist.entrySet()) {
+      if (strongers.contains(enemyPiece.getKey()) && enemyPiece.getValue() > 0) {
+        probabilities.add(enemyPiece.getValue());
+      }
     }
 
     if (probabilities.isEmpty()) {
-        return 0;
+      return 0;
     }
 
     probabilities.sort(Collections.reverseOrder());
     double bestProbability = probabilities.get(0);
-    
+
     // Supõe chance de bomba de 20%
     double guessBomb = 0.2;
 
     // Fórmula de pontuação (ajuste conforme sua lógica de jogo)
     double base = 10.0;
     return base + 80.0 * bestProbability - 30.0 * guessBomb;
-}
+  }
 
   @Override
   public PieceAction play(Board board, Feedback myLastFeedback, Feedback enemyLastFeedback) {
@@ -546,7 +557,7 @@ public class RaiAraujoPlayer implements Player {
 
     if (action != null) {
       updateRecentActions(action.getPiece());
-    } 
+    }
     return action;
   }
 }
