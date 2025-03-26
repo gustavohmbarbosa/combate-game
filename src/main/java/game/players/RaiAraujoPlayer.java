@@ -178,8 +178,8 @@ public class RaiAraujoPlayer implements Player {
     if (feedback instanceof AttackFeedback atk) {
       // AttackFeedback => o "attacker" venceu e se moveu de [fromX, fromY] para [toX,
       // toY].
-      Piece attacker = atk.attacker; // venceu
-      Piece defender = atk.defender; // perdeu
+      Piece attacker = atk.attacker;
+      Piece defender = atk.defender;
       int fromX = atk.fromX;
       int fromY = atk.fromY;
       int toX = atk.toX;
@@ -246,11 +246,9 @@ public class RaiAraujoPlayer implements Player {
     if (!Board.isValidPosition(x, y))
       return;
     Map<String, Double> cellDist = enemyProbabilities[x][y];
-    double sum = 0.0;
     for (String c : cellDist.keySet()) {
       if (c.equals(code)) {
         cellDist.put(c, 1.0);
-        sum += 1.0;
       } else {
         cellDist.put(c, 0.0);
       }
@@ -412,7 +410,7 @@ public class RaiAraujoPlayer implements Player {
   public void updateRecentActions(Piece piece) {
     // se o topo da pilha for diferente da peça que vai ser jogada, reseta a pilha
     if (recentPiecesPlayed.isEmpty()
-        || !(recentPiecesPlayed.peek().getRepresentation().equals(piece.getRepresentation()))) {
+        || !(recentPiecesPlayed.peek().equals(piece))) {
       recentPiecesPlayed.clear();
     }
 
@@ -421,8 +419,7 @@ public class RaiAraujoPlayer implements Player {
 
   public boolean checkRecentActions(Piece piece) {
     // se na pilha já existe 2 jogadas e a última é da mesma peça, evitar jogar pois perde a vez
-    if (recentPiecesPlayed.size() >= 2 &&
-        recentPiecesPlayed.peek().getRepresentation().equals(piece.getRepresentation())) {
+    if (recentPiecesPlayed.size() >= 2 && recentPiecesPlayed.peek().equals(piece)) {
       return false;
     }
     return true;
@@ -443,7 +440,7 @@ public class RaiAraujoPlayer implements Player {
     if (occupant instanceof OpponentPiece) {
       // **Trata OpponentPiece como inimigo "desconhecido"**
       // => "scoreAttackUnknown(...)"
-      return scoreAttackUnknown(myPiece);
+      return scoreAttackUnknown(myPiece, tx, ty);
     }
 
     String occPlayer = occupant.getPlayer();
@@ -471,7 +468,7 @@ public class RaiAraujoPlayer implements Player {
    * de força desconhecida => assume uma força média ou faz uma heurística
    * para pontuar o ataque.
    */
-  private double scoreAttackUnknown(Piece myPiece) {
+  private double scoreAttackUnknown(Piece myPiece, int tx, int ty) {
     int myStr = myPiece.getStrength();
     double guessWinProb;
 
