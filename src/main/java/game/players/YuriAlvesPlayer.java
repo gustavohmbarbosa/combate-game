@@ -7,28 +7,29 @@ import java.util.HashMap;
 import java.util.List;
 
 import game.Board;
+import game.feedbacks.AttackFeedback;
+import game.feedbacks.DefeatFeedback;
+import game.feedbacks.EqualStrengthFeedback;
 import game.feedbacks.Feedback;
+import game.feedbacks.LandmineFeedback;
 import game.pieces.Piece;
 import game.pieces.PieceAction;
 import game.pieces.PieceFactory;
 
-public class YuriAlvesPlayer implements Player
-{
+public class YuriAlvesPlayer implements Player {
 	private String playerName = "Yuri Alves";
-	private Map<String, Integer> strengthTable = new HashMap<String,Integer>();
-	private Map<String, Integer> countDistribution = new HashMap<String,Integer>();
+	private Map<String, Integer> strengthTable = new HashMap<String, Integer>();
+	private Map<String, Integer> countDistribution = new HashMap<String, Integer>();
 	private List<Map<String, Integer>> lastTargetPositions = new LinkedList<Map<String, Integer>>();
 	// private String[][] overlayBoard = new String[10][10];
 
 	@Override
-	public String getPlayerName()
-	{
+	public String getPlayerName() {
 		return this.playerName;
 	}
 
 	@Override
-	public Piece[][] setup(Board board)
-	{
+	public Piece[][] setup(Board board) {
 		Piece[][] setup = new Piece[4][10];
 		setup[0][0] = PieceFactory.createPiece("S", this.playerName, board);
 		setup[0][1] = PieceFactory.createPiece("S", this.playerName, board);
@@ -98,8 +99,10 @@ public class YuriAlvesPlayer implements Player
 	}
 
 	@Override
-	public PieceAction play(Board board, Feedback myLastFeedback, Feedback enemyLastFeedback)
-	{
+	public PieceAction play(Board board, Feedback myLastFeedback, Feedback enemyLastFeedback) {
+
+		updateCountDistribution(myLastFeedback);
+		
 		Piece targetPiece = null;
 		Double maxValue = 0.0;
 		Integer targetX = 0;
@@ -107,40 +110,29 @@ public class YuriAlvesPlayer implements Player
 		Integer oldX = 0;
 		Integer oldY = 0;
 		// implement inner state update
-		for (int x = 0; x < 10; x++)
-		{
-			for (int y = 0; y < 10; y++)
-			{
+		for (int x = 0; x < 10; x++) {
+			for (int y = 0; y < 10; y++) {
 				Piece currentPiece = board.getPiece(x, y);
-				if
-				(
-					currentPiece != null &&
-					currentPiece.getPlayer() != null &&
-					currentPiece.getPlayer().equals(this.playerName) &&
-					!currentPiece.getRepresentation().equals("PS") &&
-					!currentPiece.getRepresentation().equals("M") &&
-					(
-						currentPiece.canMove(x+1, y) ||
-						currentPiece.canMove(x-1, y) ||
-						currentPiece.canMove(x, y+1) ||
-						currentPiece.canMove(x, y-1)
-					) &&
-					(
-						this.lastTargetPositions.size() < 3 ||
-						x != this.lastTargetPositions.get(0).get("x") ||
-						y != this.lastTargetPositions.get(0).get("y") ||
-						x != this.lastTargetPositions.get(1).get("x") ||
-						y != this.lastTargetPositions.get(1).get("y") ||
-						x != this.lastTargetPositions.get(2).get("x") ||
-						y != this.lastTargetPositions.get(2).get("y")
-					)
-				)
-				{
+				if (currentPiece != null &&
+						currentPiece.getPlayer() != null &&
+						currentPiece.getPlayer().equals(this.playerName) &&
+						!currentPiece.getRepresentation().equals("PS") &&
+						!currentPiece.getRepresentation().equals("M") &&
+						(currentPiece.canMove(x + 1, y) ||
+								currentPiece.canMove(x - 1, y) ||
+								currentPiece.canMove(x, y + 1) ||
+								currentPiece.canMove(x, y - 1))
+						&&
+						(this.lastTargetPositions.size() < 3 ||
+								x != this.lastTargetPositions.get(0).get("x") ||
+								y != this.lastTargetPositions.get(0).get("y") ||
+								x != this.lastTargetPositions.get(1).get("x") ||
+								y != this.lastTargetPositions.get(1).get("y") ||
+								x != this.lastTargetPositions.get(2).get("x") ||
+								y != this.lastTargetPositions.get(2).get("y"))) {
 					Boolean[][] overlayBoard = new Boolean[10][10];
-					for (int i = 0; i < 10; i++)
-					{
-						for (int j = 0; j < 10; j++)
-						{
+					for (int i = 0; i < 10; i++) {
+						for (int j = 0; j < 10; j++) {
 							overlayBoard[i][j] = false;
 						}
 					}
@@ -152,72 +144,66 @@ public class YuriAlvesPlayer implements Player
 					startSearchPathPositon.put("distance", 0);
 					startSearchPath.add(startSearchPathPositon);
 					searchSpace.add(startSearchPath);
-					while (true)
-					{
+					while (true) {
 						List<Map<String, Integer>> currentSearchPath = searchSpace.poll();
-						if (currentSearchPath == null)
-						{
+						if (currentSearchPath == null) {
 							break;
 						}
 						Integer currentX = currentSearchPath.getLast().get("x");
 						Integer currentY = currentSearchPath.getLast().get("y");
 						Integer currentDistance = currentSearchPath.getLast().get("distance");
 						overlayBoard[currentX][currentY] = true;
-						if (board.getPiece(currentX, currentY) == null || board.getPiece(currentX, currentY) == currentPiece)
-						{
+						if (board.getPiece(currentX, currentY) == null
+								|| board.getPiece(currentX, currentY) == currentPiece) {
 							List<Map<String, Integer>> directions = new LinkedList<Map<String, Integer>>();
 							Map<String, Integer> right = new HashMap<String, Integer>();
 							Map<String, Integer> left = new HashMap<String, Integer>();
 							Map<String, Integer> up = new HashMap<String, Integer>();
 							Map<String, Integer> down = new HashMap<String, Integer>();
-							right.put("x", currentX+1);
+							right.put("x", currentX + 1);
 							right.put("y", currentY);
-							left.put("x", currentX-1);
+							left.put("x", currentX - 1);
 							left.put("y", currentY);
 							up.put("x", currentX);
-							up.put("y", currentY+1);
+							up.put("y", currentY + 1);
 							down.put("x", currentX);
-							down.put("y", currentY-1);
+							down.put("y", currentY - 1);
 							directions.add(up);
 							directions.add(down);
 							directions.add(left);
 							directions.add(right);
-							for (Map<String, Integer> direction : directions)
-							{
-								if
-								(
-									Board.isValidPosition(direction.get("x"), direction.get("y")) &&
-									(
-										board.getPiece(direction.get("x"), direction.get("y")) == null ||
-										board.getPiece(direction.get("x"), direction.get("y")).getPlayer() == null
-									) &&
-									overlayBoard[direction.get("x")][direction.get("y")] == false
-								)
-								{
-									List<Map<String, Integer>> newSearchPath = new LinkedList<Map<String, Integer>>(currentSearchPath);
-									direction.put("distance", currentDistance+1);
+							for (Map<String, Integer> direction : directions) {
+								if (Board.isValidPosition(direction.get("x"), direction.get("y")) &&
+										(board.getPiece(direction.get("x"), direction.get("y")) == null ||
+												board.getPiece(direction.get("x"), direction.get("y"))
+														.getPlayer() == null)
+										&&
+										overlayBoard[direction.get("x")][direction.get("y")] == false) {
+									List<Map<String, Integer>> newSearchPath = new LinkedList<Map<String, Integer>>(
+											currentSearchPath);
+									direction.put("distance", currentDistance + 1);
 									newSearchPath.add(direction);
 									searchSpace.add(newSearchPath);
 								}
 							}
-						}
-						else if (board.getPiece(currentX, currentY).getPlayer() == null)
-						{
+						} else if (board.getPiece(currentX, currentY).getPlayer() == null) {
 							Integer victoryCount = 0;
 							Integer countDistributionTotal = 0;
-							for (Map.Entry<String, Integer> pieceCount : this.countDistribution.entrySet())
-							{
-								countDistributionTotal = countDistributionTotal+pieceCount.getValue();
-								if (strengthTable.get(pieceCount.getKey()) <= currentPiece.getStrength())
-								{
-									victoryCount = victoryCount+pieceCount.getValue();
+							for (Map.Entry<String, Integer> pieceCount : this.countDistribution.entrySet()) {
+								countDistributionTotal = countDistributionTotal + pieceCount.getValue();
+								if ((strengthTable.get(pieceCount.getKey()) <= currentPiece.getStrength()) ||
+										(currentPiece.getRepresentation().equals("AS")
+												&& pieceCount.getKey().equals("G") ||
+												(currentPiece.getRepresentation().equals("CP")
+														&& pieceCount.getKey().equals("M")))) {
+									victoryCount = victoryCount + pieceCount.getValue();
 								}
 							}
-							if (2*victoryCount >= countDistributionTotal || targetPiece == null || currentPiece.getRepresentation().equals("S"))
-							{
-								Double newMaxValue = ((double)victoryCount/(double)countDistributionTotal)*(20.0/(double)currentSearchPath.getLast().get("distance"));
-								if (newMaxValue > maxValue)
-								{
+							if (2 * victoryCount >= countDistributionTotal || targetPiece == null
+									|| currentPiece.getRepresentation().equals("S")) {
+								Double newMaxValue = ((double) victoryCount / (double) countDistributionTotal)
+										* (20.0 / (double) currentSearchPath.getLast().get("distance"));
+								if (newMaxValue > maxValue) {
 									maxValue = newMaxValue;
 									targetPiece = currentPiece;
 									targetX = currentSearchPath.get(1).get("x");
@@ -225,34 +211,25 @@ public class YuriAlvesPlayer implements Player
 									oldX = x;
 									oldY = y;
 								}
-							}
-							else
-							{
-								Integer defeatCount = countDistributionTotal-victoryCount;
-								Double newMaxValue = ((double)defeatCount/(double)countDistributionTotal)*(20.0/(double)currentSearchPath.getLast().get("distance"));
-								if (newMaxValue > maxValue)
-								{
+							} else {
+								Integer defeatCount = countDistributionTotal - victoryCount;
+								Double newMaxValue = ((double) defeatCount / (double) countDistributionTotal)
+										* (20.0 / (double) currentSearchPath.getLast().get("distance"));
+								if (newMaxValue > maxValue) {
 									maxValue = newMaxValue;
 									Integer newTargetX = currentSearchPath.get(1).get("x");
 									Integer newTargetY = currentSearchPath.get(1).get("y");
-									if (newTargetX > currentX)
-									{
-										newTargetX = currentX-1;
+									if (newTargetX > currentX) {
+										newTargetX = currentX - 1;
+									} else if (newTargetX < currentX) {
+										newTargetX = currentX + 1;
 									}
-									else if (newTargetX < currentX)
-									{
-										newTargetX = currentX+1;
+									if (newTargetY > currentY) {
+										newTargetY = currentY - 1;
+									} else if (newTargetY < currentY) {
+										newTargetY = currentY + 1;
 									}
-									if (newTargetY > currentY)
-									{
-										newTargetY = currentY-1;
-									}
-									else if (newTargetY < currentY)
-									{
-										newTargetY = currentY+1;
-									}
-									if (currentPiece.canMove(newTargetX, newTargetY))
-									{
+									if (currentPiece.canMove(newTargetX, newTargetY)) {
 										targetPiece = currentPiece;
 										targetX = newTargetX;
 										targetY = newTargetY;
@@ -266,14 +243,11 @@ public class YuriAlvesPlayer implements Player
 				}
 			}
 		}
-		if (this.lastTargetPositions.size() == 3)
-		{
+		if (this.lastTargetPositions.size() == 3) {
 			this.lastTargetPositions.removeFirst();
 		}
-		for (Map<String, Integer> currentLastTargetPosition : lastTargetPositions)
-		{
-			if (currentLastTargetPosition.get("x").equals(oldX) && currentLastTargetPosition.get("y").equals(oldY))
-			{
+		for (Map<String, Integer> currentLastTargetPosition : lastTargetPositions) {
+			if (currentLastTargetPosition.get("x").equals(oldX) && currentLastTargetPosition.get("y").equals(oldY)) {
 				currentLastTargetPosition.put("x", targetX);
 				currentLastTargetPosition.put("y", targetY);
 			}
@@ -285,4 +259,57 @@ public class YuriAlvesPlayer implements Player
 		PieceAction result = new PieceAction(targetPiece, targetX, targetY);
 		return result;
 	}
+
+	private void updateCountDistribution(Feedback feedback) {
+		if (feedback == null) {
+			return;
+		}
+
+		String eliminatedPieceCode = null;
+
+		if (feedback instanceof AttackFeedback) {
+			AttackFeedback af = (AttackFeedback) feedback;
+			if (af.attacker.getPlayer().equals(this.playerName)) {
+				eliminatedPieceCode = af.defender.getRepresentation();
+			} else if (af.defender.getPlayer().equals(this.playerName)) {
+				eliminatedPieceCode = af.attacker.getRepresentation();
+			}
+		}
+
+		else if (feedback instanceof DefeatFeedback) {
+			DefeatFeedback df = (DefeatFeedback) feedback;
+
+			if (!df.attacker.getPlayer().equals(this.playerName)) {
+				eliminatedPieceCode = df.attacker.getRepresentation();
+			} else if (!df.defender.getPlayer().equals(this.playerName)) {
+				eliminatedPieceCode = df.defender.getRepresentation();
+			}
+		}
+
+		else if (feedback instanceof LandmineFeedback) {
+			LandmineFeedback lf = (LandmineFeedback) feedback;
+			if (!lf.getVictim().getPlayer().equals(this.playerName)) {
+				eliminatedPieceCode = lf.getVictim().getRepresentation();
+			}
+		}
+
+		else if (feedback instanceof EqualStrengthFeedback) {
+			EqualStrengthFeedback ef = (EqualStrengthFeedback) feedback;
+			if (!ef.attacker.getPlayer().equals(this.playerName)) {
+				eliminatedPieceCode = ef.attacker.getRepresentation();
+			} else if (!ef.defender.getPlayer().equals(this.playerName)) {
+				eliminatedPieceCode = ef.defender.getRepresentation();
+			}
+		}
+
+		if (eliminatedPieceCode != null && countDistribution.containsKey(eliminatedPieceCode)) {
+			int newCount = countDistribution.get(eliminatedPieceCode) - 1;
+			if (newCount > 0) {
+				countDistribution.put(eliminatedPieceCode, newCount);
+			} else {
+				countDistribution.remove(eliminatedPieceCode);
+			}
+		}
+	}
+
 }

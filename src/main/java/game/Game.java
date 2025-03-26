@@ -7,6 +7,7 @@ import game.pieces.Piece;
 import game.pieces.PieceAction;
 import game.players.Player;
 import game.players.SimplePlayer;
+import game.players.YuriAlvesPlayer;
 
 import java.util.Random;
 
@@ -114,7 +115,7 @@ public class Game {
     public static void main(String[] args) {
 
         SimplePlayer player1 = new SimplePlayer("Player1");
-        SimplePlayer player2 = new SimplePlayer("Player2");
+        YuriAlvesPlayer player2 = new YuriAlvesPlayer();
 
         Game game = new Game(player1, player2);
         game.start();

@@ -12,7 +12,7 @@ import java.util.*;
 import static game.feedbacks.Feedback.convertIntToAlfa;
 
 public class Board {
-    private static final int MAX_NUMBER_OF_MOVES = 5000;
+    private static final int MAX_NUMBER_OF_MOVES = 200;
 
     private Piece[][] board;
     public static final int ROWS = 10;
