@@ -18,11 +18,16 @@ import game.pieces.PieceFactory;
 
 public class YuriAlvesPlayer implements Player
 {
-	private String playerName = "Yuri Alves";
+	private String playerName;
 	private Map<String, Integer> strengthTable = new HashMap<String, Integer>();
 	private Map<String, Integer> countDistribution = new HashMap<String, Integer>();
 	private List<Map<String, Integer>> lastTargetPositions = new LinkedList<Map<String, Integer>>();
 	// private String[][] overlayBoard = new String[10][10];
+
+	public YuriAlvesPlayer(String playerName)
+	{
+		this.playerName = playerName;
+	}
 
 	@Override
 	public String getPlayerName()
@@ -105,7 +110,6 @@ public class YuriAlvesPlayer implements Player
 	public PieceAction play(Board board, Feedback myLastFeedback, Feedback enemyLastFeedback)
 	{
 		updateCountDistribution(myLastFeedback);
-		updateCountDistribution(enemyLastFeedback);
 		Piece targetPiece = null;
 		Double maxValue = 0.0;
 		Integer targetX = 0;
@@ -126,10 +130,10 @@ public class YuriAlvesPlayer implements Player
 					!currentPiece.getRepresentation().equals("PS") &&
 					!currentPiece.getRepresentation().equals("M") &&
 					(
-						currentPiece.canMove(x + 1, y) ||
-						currentPiece.canMove(x - 1, y) ||
-						currentPiece.canMove(x, y + 1) ||
-						currentPiece.canMove(x, y - 1)
+						currentPiece.canMove(x+1, y) ||
+						currentPiece.canMove(x-1, y) ||
+						currentPiece.canMove(x, y+1) ||
+						currentPiece.canMove(x, y-1)
 					) &&
 					(
 						this.lastTargetPositions.size() < 3 ||
@@ -176,14 +180,14 @@ public class YuriAlvesPlayer implements Player
 							Map<String, Integer> left = new HashMap<String, Integer>();
 							Map<String, Integer> up = new HashMap<String, Integer>();
 							Map<String, Integer> down = new HashMap<String, Integer>();
-							right.put("x", currentX + 1);
+							right.put("x", currentX+1);
 							right.put("y", currentY);
-							left.put("x", currentX - 1);
+							left.put("x", currentX-1);
 							left.put("y", currentY);
 							up.put("x", currentX);
-							up.put("y", currentY + 1);
+							up.put("y", currentY+1);
 							down.put("x", currentX);
-							down.put("y", currentY - 1);
+							down.put("y", currentY-1);
 							directions.add(up);
 							directions.add(down);
 							directions.add(left);
@@ -309,56 +313,68 @@ public class YuriAlvesPlayer implements Player
 		{
 			return;
 		}
+
 		String eliminatedPieceCode = null;
+
 		if (feedback instanceof AttackFeedback)
 		{
-			AttackFeedback attackFeedback = (AttackFeedback)feedback;
-			if (attackFeedback.attacker.getPlayer().equals(this.playerName))
+			AttackFeedback af = (AttackFeedback)feedback;
+			if (af.attacker.getPlayer().equals(this.playerName))
 			{
-				eliminatedPieceCode = attackFeedback.defender.getRepresentation();
+				eliminatedPieceCode = af.defender.getRepresentation();
 			}
-			else if (attackFeedback.defender.getPlayer().equals(this.playerName))
+			else if (af.defender.getPlayer().equals(this.playerName))
 			{
-				eliminatedPieceCode = attackFeedback.attacker.getRepresentation();
+				eliminatedPieceCode = af.attacker.getRepresentation();
 			}
 		}
+
 		else if (feedback instanceof DefeatFeedback)
 		{
-			DefeatFeedback defeatFeedback = (DefeatFeedback)feedback;
-
-			if (defeatFeedback.attacker.getPlayer().equals(this.playerName))
+			DefeatFeedback df = (DefeatFeedback)feedback;
+			if (!df.attacker.getPlayer().equals(this.playerName))
 			{
-				eliminatedPieceCode = defeatFeedback.defender.getRepresentation();
+				eliminatedPieceCode = df.attacker.getRepresentation();
 			}
-			else if (defeatFeedback.defender.getPlayer().equals(this.playerName))
+			else if (!df.defender.getPlayer().equals(this.playerName))
 			{
-				eliminatedPieceCode = defeatFeedback.attacker.getRepresentation();
+				eliminatedPieceCode = df.defender.getRepresentation();
 			}
 		}
+
 		else if (feedback instanceof LandmineFeedback)
 		{
-			LandmineFeedback landmineFeedback = (LandmineFeedback)feedback;
-			if (!landmineFeedback.getVictim().getPlayer().equals(this.playerName))
+			LandmineFeedback lf = (LandmineFeedback)feedback;
+			if (!lf.getVictim().getPlayer().equals(this.playerName))
 			{
-				eliminatedPieceCode = landmineFeedback.getVictim().getRepresentation();
+				eliminatedPieceCode = lf.getVictim().getRepresentation();
 			}
 		}
+
 		else if (feedback instanceof EqualStrengthFeedback)
 		{
-			EqualStrengthFeedback equalStrengthFeedback = (EqualStrengthFeedback)feedback;
-			if (equalStrengthFeedback.attacker.getPlayer().equals(this.playerName))
+			EqualStrengthFeedback ef = (EqualStrengthFeedback)feedback;
+			if (!ef.attacker.getPlayer().equals(this.playerName))
 			{
-				eliminatedPieceCode = equalStrengthFeedback.defender.getRepresentation();
+				eliminatedPieceCode = ef.attacker.getRepresentation();
 			}
-			else if (equalStrengthFeedback.defender.getPlayer().equals(this.playerName))
+			else if (!ef.defender.getPlayer().equals(this.playerName))
 			{
-				eliminatedPieceCode = equalStrengthFeedback.attacker.getRepresentation();
+				eliminatedPieceCode = ef.defender.getRepresentation();
 			}
 		}
-		if (eliminatedPieceCode != null)
+
+		if (eliminatedPieceCode != null && countDistribution.containsKey(eliminatedPieceCode))
 		{
-			int newCount = this.countDistribution.get(eliminatedPieceCode)-1;
-			this.countDistribution.put(eliminatedPieceCode, newCount);
+			int newCount = countDistribution.get(eliminatedPieceCode)-1;
+			if (newCount > 0)
+			{
+				countDistribution.put(eliminatedPieceCode, newCount);
+			}
+			else
+			{
+				countDistribution.remove(eliminatedPieceCode);
+			}
 		}
 	}
 }
