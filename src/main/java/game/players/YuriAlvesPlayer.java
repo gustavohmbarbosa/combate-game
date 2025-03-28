@@ -22,7 +22,7 @@ public class YuriAlvesPlayer implements Player
 	private Map<String, Integer> strengthTable = new HashMap<String, Integer>();
 	private Map<String, Integer> countDistribution = new HashMap<String, Integer>();
 	private List<Map<String, Integer>> lastTargetPositions = new LinkedList<Map<String, Integer>>();
-	// private String[][] overlayBoard = new String[10][10];
+	private String[][] overlayTypeBoard = new String[10][10];
 
 	public YuriAlvesPlayer(String playerName)
 	{
@@ -110,6 +110,7 @@ public class YuriAlvesPlayer implements Player
 	public PieceAction play(Board board, Feedback myLastFeedback, Feedback enemyLastFeedback)
 	{
 		updateCountDistribution(myLastFeedback);
+		updateCountDistribution(enemyLastFeedback);
 		Piece targetPiece = null;
 		Double maxValue = 0.0;
 		Integer targetX = 0;
