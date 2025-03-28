@@ -12,6 +12,7 @@ import game.feedbacks.DefeatFeedback;
 import game.feedbacks.EqualStrengthFeedback;
 import game.feedbacks.Feedback;
 import game.feedbacks.LandmineFeedback;
+import game.feedbacks.MoveFeedback;
 import game.pieces.Piece;
 import game.pieces.PieceAction;
 import game.pieces.PieceFactory;
@@ -22,7 +23,8 @@ public class YuriAlvesPlayer implements Player
 	private Map<String, Integer> strengthTable = new HashMap<String, Integer>();
 	private Map<String, Integer> countDistribution = new HashMap<String, Integer>();
 	private List<Map<String, Integer>> lastTargetPositions = new LinkedList<Map<String, Integer>>();
-	private String[][] overlayTypeBoard = new String[10][10];
+	private String[][] enemyPiecePositions = new String[10][10];
+
 
 	public YuriAlvesPlayer(String playerName)
 	{
@@ -147,6 +149,7 @@ public class YuriAlvesPlayer implements Player
 					)
 				)
 				{
+		
 					Boolean[][] overlayBoard = new Boolean[10][10];
 					for (int i = 0; i < 10; i++)
 					{
@@ -234,6 +237,15 @@ public class YuriAlvesPlayer implements Player
 								{
 									victoryCount = victoryCount+pieceCount.getValue();
 								}
+							}
+							Boolean kill = canKillWithPiece(currentPiece, currentX, currentY);
+							if (kill != null && kill)
+							{
+								victoryCount = countDistributionTotal;
+							}
+							else if (kill != null)
+							{
+								victoryCount = 0;
 							}
 							if (2*victoryCount >= countDistributionTotal || targetPiece == null || currentPiece.getRepresentation().equals("S"))
 							{
@@ -323,11 +335,17 @@ public class YuriAlvesPlayer implements Player
 			if (af.attacker.getPlayer().equals(this.playerName))
 			{
 				eliminatedPieceCode = af.defender.getRepresentation();
+				enemyPiecePositions[af.toX][af.toY] = null;
 			}
 			else if (af.defender.getPlayer().equals(this.playerName))
 			{
-				eliminatedPieceCode = af.attacker.getRepresentation();
+				storeEnemyPiecePosition(af.toX, af.toY, af.defender.getRepresentation());
 			}
+		}
+		else if (feedback instanceof MoveFeedback)
+		{
+			MoveFeedback moveFeedback = (MoveFeedback)feedback;
+			updateEnemyPiecePosition(moveFeedback.fromX, moveFeedback.fromY, moveFeedback.toX, moveFeedback.toY);
 		}
 
 		else if (feedback instanceof DefeatFeedback)
@@ -336,10 +354,11 @@ public class YuriAlvesPlayer implements Player
 			if (!df.attacker.getPlayer().equals(this.playerName))
 			{
 				eliminatedPieceCode = df.attacker.getRepresentation();
+				enemyPiecePositions[df.toX][df.toY] = null;
 			}
 			else if (!df.defender.getPlayer().equals(this.playerName))
 			{
-				eliminatedPieceCode = df.defender.getRepresentation();
+				storeEnemyPiecePosition(df.toX, df.toY, df.defender.getRepresentation());
 			}
 		}
 
@@ -371,11 +390,35 @@ public class YuriAlvesPlayer implements Player
 			if (newCount > 0)
 			{
 				countDistribution.put(eliminatedPieceCode, newCount);
+
 			}
 			else
 			{
 				countDistribution.remove(eliminatedPieceCode);
 			}
+			
 		}
 	}
+
+	private void storeEnemyPiecePosition(int x, int y, String pieceRepresentation) {
+		this.enemyPiecePositions[x][y] = pieceRepresentation;
+		System.out.println("Peça do inimigo descoberta = " + enemyPiecePositions[x][y]);
+	}
+
+	private void updateEnemyPiecePosition(int fromX, int fromY, int toX, int toY) {
+		
+			this.enemyPiecePositions[toX][toY] = this.enemyPiecePositions[fromX][fromY];
+
+			this.enemyPiecePositions[fromX][fromY] = null;
+	}
+	
+
+	private Boolean canKillWithPiece(Piece attackingPiece, int targetX, int targetY) {
+		if (this.enemyPiecePositions[targetX][targetY] != null) {
+			int enemyStrength = strengthTable.get(enemyPiecePositions[targetX][targetY]);
+			return attackingPiece.getStrength() > enemyStrength;
+		}
+		return null; 
+	}
+
 }
