@@ -30,11 +30,7 @@ public class RaiAraujoPlayer implements Player {
   private Stack<Piece> recentPiecesPlayed = new Stack<Piece>();
   private Map<String, Integer> pieceStrength = new HashMap<>();
 
-  public RaiAraujoPlayer(String name) {
-    this.playerName = name;
-    initEnemyKnowledge();
-    initEnemyPieces();
-    initPieceStrength();
+  public RaiAraujoPlayer() {
   }
 
   @Override
@@ -51,6 +47,10 @@ public class RaiAraujoPlayer implements Player {
     placeAgent(pieces, board);
     placeCorporals(pieces, board);
     placeRemainingPieces(pieces, board);
+
+    initEnemyKnowledge(board);
+    initEnemyPieces();
+    initPieceStrength();
 
     return setup;
   }
@@ -168,13 +168,13 @@ public class RaiAraujoPlayer implements Player {
     }
   }
 
-  public void initEnemyKnowledge() {
+  public void initEnemyKnowledge(Board board) {
     // Cada celula tem um Hmap<String, Double> com as probabilidades de cada peça
     initProbabilityGrid();
-
     // Se sou Player1, o inimigo está em 6..9; se Player2, 0..3
-    int enemyStartRow = this.playerName.equals("Player1") ? 6 : 0;
-    int enemyEndRow = this.playerName.equals("Player1") ? 9 : 3;
+    String player1 = board.player1.getPlayerName();
+    int enemyStartRow = this.playerName.equals(player1) ? 6 : 0;
+    int enemyEndRow = this.playerName.equals(player1) ? 9 : 3;
     double totalEnemy = 40.0;
 
     for (int x = 0; x < Board.ROWS; x++) {
@@ -406,7 +406,7 @@ public class RaiAraujoPlayer implements Player {
 
     // 1) Casa vazia => base 5 + 3 se "para frente" = máx 8
     if (occupant == null) {
-      int forwardDir = (this.playerName.equals("Player1")) ? 1 : -1;
+      int forwardDir = (this.playerName.equals(board.player1.getPlayerName())) ? 1 : -1;
       int toX = tx - myPiece.getPosX();
       int toY = ty - myPiece.getPosY();
       double bonus = (toX == forwardDir) || (toY == forwardDir) ? 3.0 : 0.0;
