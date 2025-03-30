@@ -11,7 +11,7 @@ import java.util.*;
 import static java.util.Map.entry;
 
 public class PauloSilvestrePlayer implements Player {
-    private final String nomeJogador;
+    private String nomeJogador = "PauloSilvestre";
     private final Deque<Piece> pecasMovidasRecentemente;
     private static final int MAX_MOVIMENTOS_CONSECUTIVOS = 2;
     private static final Set<String> POSICOES_AGUA = Set.of("E3", "E4", "E7", "E8", "F3", "F4", "F7", "F8");
@@ -33,8 +33,7 @@ public class PauloSilvestrePlayer implements Player {
         entry("OP", -1)  // Inimigo desconhecido
     );
     
-    public PauloSilvestrePlayer(String nomeJogador) {
-        this.nomeJogador = nomeJogador;
+    public PauloSilvestrePlayer() {
         this.pecasMovidasRecentemente = new ArrayDeque<>(MAX_MOVIMENTOS_CONSECUTIVOS);
         this.aleatorio = new Random();
     }
@@ -57,7 +56,7 @@ public class PauloSilvestrePlayer implements Player {
             }
         }
 
-        int linhaPS = nomeJogador.equals("Player1") ? 0 : 3;
+        int linhaPS = nomeJogador.equals(tabuleiro.player1.getPlayerName()) ? 0 : 3;
         int colunaPS = aleatorio.nextInt(10);
         resultado[linhaPS][colunaPS] = PieceFactory.createPiece("PS", this.nomeJogador, tabuleiro);
 
@@ -97,7 +96,7 @@ public class PauloSilvestrePlayer implements Player {
             }
         }
 
-        int direcaoFrente = nomeJogador.equals("Player1") ? 1 : -1;
+        int direcaoFrente = nomeJogador.equals(tabuleiro.player1.getPlayerName()) ? 1 : -1;
         List<AcaoPonderada> acoesPossiveis = new ArrayList<>();
 
         for (int i = 0; i < Board.ROWS; i++) {
