@@ -44,36 +44,37 @@ public class PauloSilvestrePlayer implements Player {
     }
 
     @Override
-    public Piece[][] setup(Board tabuleiro) {
-        Piece[][] resultado = new Piece[4][10];
-        List<String> pecasParaDistribuir = new ArrayList<>();
+public Piece[][] setup(Board tabuleiro) {
+    Piece[][] resultado = new Piece[4][10];
+    List<String> pecasParaDistribuir = new ArrayList<>();
 
-        for (QuantityPerPiece peca : QuantityPerPiece.values()) {
-            if (!peca.getCode().equals("PS")) {
-                for (int i = 0; i < peca.getQuantity(); i++) {
-                    pecasParaDistribuir.add(peca.getCode());
-                }
+    for (QuantityPerPiece peca : QuantityPerPiece.values()) {
+        if (!peca.getCode().equals("PS")) {
+            for (int i = 0; i < peca.getQuantity(); i++) {
+                pecasParaDistribuir.add(peca.getCode());
             }
         }
-
-        int linhaPS = nomeJogador.equals(tabuleiro.player1.getPlayerName()) ? 0 : 3;
-        int colunaPS = aleatorio.nextInt(10);
-        resultado[linhaPS][colunaPS] = PieceFactory.createPiece("PS", this.nomeJogador, tabuleiro);
-
-        Collections.shuffle(pecasParaDistribuir);
-        int index = 0;
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 10; j++) {
-                if (i == linhaPS && j == colunaPS) continue;
-                if (index < pecasParaDistribuir.size()) {
-                    resultado[i][j] = PieceFactory.createPiece(pecasParaDistribuir.get(index++), this.nomeJogador, tabuleiro);
-                }
-            }
-        }
-
-        return resultado;
     }
 
+    boolean souPlayer1 = this.nomeJogador.equals(tabuleiro.player1.getPlayerName());
+    int linhaPS = souPlayer1 ? 3 : 0; 
+    int colunaPS = aleatorio.nextInt(10);
+    resultado[linhaPS][colunaPS] = PieceFactory.createPiece("PS", this.nomeJogador, tabuleiro);
+
+    Collections.shuffle(pecasParaDistribuir);
+    int index = 0;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 10; j++) {
+            if (i == linhaPS && j == colunaPS) continue;
+            if (index < pecasParaDistribuir.size()) {
+                resultado[i][j] = PieceFactory.createPiece(pecasParaDistribuir.get(index++), 
+                    this.nomeJogador, tabuleiro);
+            }
+        }
+    }
+
+    return resultado;
+}
     @Override
     public PieceAction play(Board tabuleiro, Feedback meuUltimoFeedback, Feedback ultimoFeedbackInimigo) {
         rodadasDesdeAtaque++;
