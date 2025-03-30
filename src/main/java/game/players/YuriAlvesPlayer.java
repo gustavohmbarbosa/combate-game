@@ -19,17 +19,11 @@ import game.pieces.PieceFactory;
 
 public class YuriAlvesPlayer implements Player
 {
-	private String playerName;
+	private String playerName = "Yuri Alves";
 	private Map<String, Integer> strengthTable = new HashMap<String, Integer>();
 	private Map<String, Integer> countDistribution = new HashMap<String, Integer>();
 	private List<Map<String, Integer>> lastTargetPositions = new LinkedList<Map<String, Integer>>();
 	private String[][] enemyPiecePositions = new String[10][10];
-
-
-	public YuriAlvesPlayer(String playerName)
-	{
-		this.playerName = playerName;
-	}
 
 	@Override
 	public String getPlayerName()
