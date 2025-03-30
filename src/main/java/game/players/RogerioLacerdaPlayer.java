@@ -10,7 +10,7 @@ import game.pieces.QuantityPerPiece;
 import java.util.*;
 
 public class RogerioLacerdaPlayer implements Player {
-    private final String nomeJogador;
+    private String nomeJogador = "Rogerio Lacerda";
     private Board tabuleiroOcultoAnterior;
     private Map<String, Map<String, Double>> estadoCrença;
     private Map<String, String> knownOpponentPieces;
@@ -38,31 +38,52 @@ public class RogerioLacerdaPlayer implements Player {
         return nomeJogador;
     }
 
-    @Override /**/
-    public Piece[][] setup(Board tabuleiro) { /*Configura o tabuleiro inicial do jogador, posicionando o prisioneiro no centro da primeira linha,
-         protegido por minas terrestres, e preenchendo o restante com peças de alta patente e outras peças aleatórias.*/
+    @Override
+    public Piece[][] setup(Board tabuleiro) {
         Piece[][] configuracao = new Piece[4][10];
         List<String> pecasRestantes = new ArrayList<>();
-
+    
+        
         for (QuantityPerPiece qpp : QuantityPerPiece.values()) {
             for (int i = 0; i < qpp.getQuantity(); i++) {
                 pecasRestantes.add(qpp.getCode());
             }
         }
         Collections.shuffle(pecasRestantes);
-
-        int posPrisioneiro = 4;
-        configuracao[0][posPrisioneiro] = PieceFactory.createPiece("PS", nomeJogador, tabuleiro);
+    
+        
+        int linhaPrisioneiro;
+        int colunaPrisioneiro = 0; 
+        if (nomeJogador.equals(tabuleiro.player1.getPlayerName())) {
+            linhaPrisioneiro = 3; 
+        } else { 
+            linhaPrisioneiro = 3; 
+        }
+    
+        
+        configuracao[linhaPrisioneiro][colunaPrisioneiro] = PieceFactory.createPiece("PS", nomeJogador, tabuleiro);
         pecasRestantes.remove("PS");
-
-        int[] posBombas = {posPrisioneiro - 1, posPrisioneiro + 1};
-        for (int pos : posBombas) {
-            if (pos >= 0 && pos < 10 && pecasRestantes.contains("M")) {
-                configuracao[0][pos] = PieceFactory.createPiece("M", nomeJogador, tabuleiro);
+    
+        
+        int[][] posBombas = new int[2][2];
+        if (nomeJogador.equals(tabuleiro.player1.getPlayerName())) {
+            posBombas[0] = new int[]{linhaPrisioneiro, colunaPrisioneiro + 1}; 
+            posBombas[1] = new int[]{linhaPrisioneiro + 1, colunaPrisioneiro}; 
+        } else { 
+            posBombas[0] = new int[]{linhaPrisioneiro, colunaPrisioneiro + 1}; 
+            posBombas[1] = new int[]{linhaPrisioneiro - 1, colunaPrisioneiro}; 
+        }
+    
+        for (int[] pos : posBombas) {
+            int linha = pos[0];
+            int coluna = pos[1];
+            if (linha >= 0 && linha < 4 && coluna >= 0 && coluna < 10 && pecasRestantes.contains("M")) {
+                configuracao[linha][coluna] = PieceFactory.createPiece("M", nomeJogador, tabuleiro);
                 pecasRestantes.remove("M");
             }
         }
-
+    
+        
         List<String> altaPatente = Arrays.asList("AS", "G", "CR");
         for (int j = 0; j < 10; j++) {
             if (configuracao[0][j] == null && !pecasRestantes.isEmpty()) {
@@ -74,14 +95,17 @@ public class RogerioLacerdaPlayer implements Player {
                 pecasRestantes.remove(peca);
             }
         }
-
+    
+        
         for (int i = 1; i < 4 && !pecasRestantes.isEmpty(); i++) {
             for (int j = 0; j < 10 && !pecasRestantes.isEmpty(); j++) {
-                String peca = pecasRestantes.remove(0);
-                configuracao[i][j] = PieceFactory.createPiece(peca, nomeJogador, tabuleiro);
+                if (configuracao[i][j] == null) {
+                    String peca = pecasRestantes.remove(0);
+                    configuracao[i][j] = PieceFactory.createPiece(peca, nomeJogador, tabuleiro);
+                }
             }
         }
-
+    
         return configuracao;
     }
 
@@ -432,8 +456,8 @@ public class RogerioLacerdaPlayer implements Player {
         double lateGameFactor = (double) turnCount / MAX_TURNS;
 
         if (alvo == null) {
-            int progresso = nomeJogador.equals("Player1") ? novoX : (9 - novoX);
-            pontuacao = 5.0 * progresso;
+            int progresso = nomeJogador.equals(tabuleiro.player1.getPlayerName()) ? novoX : (9 - novoX);
+            pontuacao += 5.0 * progresso;
             double currentDist = distanceToNearestEnemy(peca.getPosX(), peca.getPosY(), tabuleiro);
             double newDist = distanceToNearestEnemy(novoX, novoY, tabuleiro);
             if (newDist < currentDist) {
@@ -452,7 +476,7 @@ public class RogerioLacerdaPlayer implements Player {
             if (knownOpponentPieces.containsKey(pos)) {
                 String type = knownOpponentPieces.get(pos);
                 int comparacao = compararPatentes(minhaPatente, type);
-                if (comparacao > 0) pontuacao = 5.0;
+                if (comparacao > 0) pontuacao += 50.0;
                 else if (comparacao < 0) pontuacao = -5.0;
                 else pontuacao = -2.0;
             } else if (estadoCrença.containsKey(pos)) {
