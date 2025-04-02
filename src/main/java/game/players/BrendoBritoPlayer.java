@@ -6,7 +6,7 @@ import game.feedbacks.Feedback;
 import game.pieces.*;
 
 public class BrendoBritoPlayer implements Player {
-    private final String playerName;
+    private final String playerName = "brendoEJose";
     private final Map<String, Double> pieceStrength = new HashMap<>();
     private final Map<String, Integer> remainingEnemyPieces = new HashMap<>();
     private final List<MoveHistory> moveHistory = new ArrayList<>();
@@ -16,8 +16,7 @@ public class BrendoBritoPlayer implements Player {
     private record MoveHistory(int fromX, int fromY, int toX, int toY, String pieceType) {}
 
     // Novo construtor que aceita nome do jogador
-    public BrendoBritoPlayer(String playerName) {
-        this.playerName = playerName;
+    public BrendoBritoPlayer() {
         initializePieceStrength();
         initializeEnemyPieces();
     }
