@@ -52,9 +52,6 @@ public class Game {
             return 1;
         }
 
-        System.out.println("Estado inicial do tabuleiro:");
-        System.out.println(board.getFeedback());
-
         Random rand = new Random();
         boolean actualPlayer = rand.nextBoolean();
 
@@ -64,7 +61,7 @@ public class Game {
 
         game:
         while (true) {
-            System.out.println("Rodada " + this.getRound() + ":");
+//            System.out.println("Rodada " + this.getRound() + ":");
 
             for (int i = 0; i < 2; i++) {
                 if (actualPlayer) {
@@ -76,8 +73,8 @@ public class Game {
                     );
                     roundFeedback = board.executeAction(action);
                     lastPlayer1Feedback  = roundFeedback;
-                    System.out.println("Player1: " + roundFeedback.getMessage());
-                    System.out.println(board.getFeedback());
+//                    System.out.println("Player1: " + roundFeedback.getMessage());
+//                    System.out.println(board.getFeedback());
                 } else {
                     // Jogada do Player2
                     PieceAction action = player2.play(
@@ -87,22 +84,21 @@ public class Game {
                     );
                     roundFeedback = board.executeAction(action);
                     lastPlayer2Feedback  = roundFeedback;
-                    System.out.println("Player2: " + roundFeedback.getMessage());
-                    System.out.println(board.getFeedback());
+//                    System.out.println("Player2: " + roundFeedback.getMessage());
+//                    System.out.println(board.getFeedback());
                 }
 
                 if (roundFeedback instanceof PrisonerFeedback) {
                     String playerName = actualPlayer ? player1.getPlayerName() : player2.getPlayerName();
 
-                    System.out.println("Jogo concluído com sucesso!!!");
-                    System.out.println("Parabéns ao jogador " + playerName + "!!!");
+//                    System.out.println("Jogo concluído com sucesso!!!");
+//                    System.out.println("Parabéns ao jogador " + playerName + "!!!");
                     return actualPlayer ? 1 : 2;
                 }
 
                 actualPlayer = !actualPlayer;
                 Feedback actualState = board.isGameFinished();
                 if (actualState != null){
-                    System.out.println(actualState.getMessage());
                     return 0;
                 }
             }
