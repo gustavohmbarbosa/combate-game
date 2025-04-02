@@ -384,7 +384,7 @@ public class RogerioLacerdaPlayer implements Player {
                     }
                 }
             }
-            System.out.println("Warning: No valid moves available for " + nomeJogador);
+//            System.out.println("Warning: No valid moves available for " + nomeJogador);
             return null;
         }
 

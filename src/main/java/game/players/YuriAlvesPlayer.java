@@ -396,7 +396,7 @@ public class YuriAlvesPlayer implements Player
 
 	private void storeEnemyPiecePosition(int x, int y, String pieceRepresentation) {
 		this.enemyPiecePositions[x][y] = pieceRepresentation;
-		System.out.println("Peça do inimigo descoberta = " + enemyPiecePositions[x][y]);
+//		System.out.println("Peça do inimigo descoberta = " + enemyPiecePositions[x][y]);
 	}
 
 	private void updateEnemyPiecePosition(int fromX, int fromY, int toX, int toY) {
