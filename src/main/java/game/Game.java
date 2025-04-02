@@ -33,8 +33,7 @@ public class Game {
     /**
      * Inicia o jogo.
      */
-<<<<<<< Updated upstream
-    public void start() {
+    public int start() {
         Piece[][] player1Setup = player1.setup(this.board);
         var player1SetupIsValid = this.board.addPlayerSetup(player1Setup, 1);
         Piece[][] player2Setup = player2.setup(this.board);
@@ -43,38 +42,28 @@ public class Game {
         if (!player1SetupIsValid && !player2SetupIsValid) {
             System.out.println("Jogo concluído por setup inválido de ambos jogadores!");
             System.out.println("Jogo empatado!");
-            return;
+            return 0;
         } else if (!player1SetupIsValid) {
             System.out.println("Jogo concluído por setup inválido!");
             System.out.println("Jogador " + player2.getPlayerName() + " venceu o jogo!");
-            return;
+            return 2;
         } else if (!player2SetupIsValid) {
             System.out.println("Jogo concluído por setup inválido!");
             System.out.println("Jogador " + player1.getPlayerName() + " venceu o jogo!");
-            return;
+            return 1;
         }
 
-=======
-    public int start() {
-        Piece[][] player1InitialMove = player1.initialMove(this.board);
-        Piece[][] player2InitialMove = player2.initialMove(this.board);
-        this.board.setPlayerInitialMove(player1InitialMove, 1);
-        this.board.setPlayerInitialMove(player2InitialMove, 2);
->>>>>>> Stashed changes
         System.out.println("Estado inicial do tabuleiro:");
         System.out.println(board.getFeedback());
 
         Random rand = new Random();
         boolean actualPlayer = rand.nextBoolean();
 
-<<<<<<< Updated upstream
         Feedback roundFeedback = null;
         Feedback lastPlayer1Feedback = null;
         Feedback lastPlayer2Feedback = null;
 
         game:
-=======
->>>>>>> Stashed changes
         while (true) {
             System.out.println("Rodada " + this.getRound() + ":");
 
