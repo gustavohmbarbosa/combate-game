@@ -24,8 +24,7 @@ public class RogerioLacerdaPlayer implements Player {
     private int turnCount = 0; 
     private static final int MAX_TURNS = 2500; 
 
-    public RogerioLacerdaPlayer(String nomeJogador) {
-        this.nomeJogador = nomeJogador;
+    public RogerioLacerdaPlayer() {
         this.estadoCrença = new HashMap<>();
         this.knownOpponentPieces = new HashMap<>();
         this.contagemImobilidade = new HashMap<>();
