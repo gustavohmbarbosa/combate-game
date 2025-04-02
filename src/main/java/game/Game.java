@@ -6,7 +6,6 @@ import game.feedbacks.PrisonerFeedback;
 import game.pieces.Piece;
 import game.pieces.PieceAction;
 import game.players.Player;
-import game.players.SimplePlayer;
 
 import java.util.Random;
 
