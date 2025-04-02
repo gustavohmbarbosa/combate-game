@@ -33,6 +33,7 @@ public class Game {
     /**
      * Inicia o jogo.
      */
+<<<<<<< Updated upstream
     public void start() {
         Piece[][] player1Setup = player1.setup(this.board);
         var player1SetupIsValid = this.board.addPlayerSetup(player1Setup, 1);
@@ -53,17 +54,27 @@ public class Game {
             return;
         }
 
+=======
+    public int start() {
+        Piece[][] player1InitialMove = player1.initialMove(this.board);
+        Piece[][] player2InitialMove = player2.initialMove(this.board);
+        this.board.setPlayerInitialMove(player1InitialMove, 1);
+        this.board.setPlayerInitialMove(player2InitialMove, 2);
+>>>>>>> Stashed changes
         System.out.println("Estado inicial do tabuleiro:");
         System.out.println(board.getFeedback());
 
         Random rand = new Random();
         boolean actualPlayer = rand.nextBoolean();
 
+<<<<<<< Updated upstream
         Feedback roundFeedback = null;
         Feedback lastPlayer1Feedback = null;
         Feedback lastPlayer2Feedback = null;
 
         game:
+=======
+>>>>>>> Stashed changes
         while (true) {
             System.out.println("Rodada " + this.getRound() + ":");
 
@@ -97,26 +108,17 @@ public class Game {
 
                     System.out.println("Jogo concluído com sucesso!!!");
                     System.out.println("Parabéns ao jogador " + playerName + "!!!");
-                    break game;
+                    return actualPlayer ? 1 : 2;
                 }
 
                 actualPlayer = !actualPlayer;
                 Feedback actualState = board.isGameFinished();
                 if (actualState != null){
                     System.out.println(actualState.getMessage());
-                    break game;
+                    return 0;
                 }
             }
             this.increaseRound();
         }
-    }
-
-    public static void main(String[] args) {
-
-        SimplePlayer player1 = new SimplePlayer("Player1");
-        SimplePlayer player2 = new SimplePlayer("Player2");
-
-        Game game = new Game(player1, player2);
-        game.start();
     }
 }
